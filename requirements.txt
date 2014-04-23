@@ -1,0 +1,3 @@
+django
+django-user-roles
+django-model-utils
