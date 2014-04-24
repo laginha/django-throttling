@@ -1,95 +1,106 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from django.conf import settings
-from django.db.models import Count
+from django.http              import HttpResponse
+from django.conf              import settings
+from django.db.models         import Count
+from django.utils             import timezone
 from django.core.urlresolvers import resolve
-from .consts import THROTTLING_OPTIONS, THROTTLING_STATUS_CODE, THROTTLING_INTERVAL
-from datetime import datetime, timedelta
-
-
-def get_or_create_consumer(request):
-    if request.user.is_authenticated():
-        return get_or_create_authenticated_consumer()
-    return get_or_create_anonymous_consumer()
-    
-def get_or_create_anonymous_consumer(request):
-    return Consumer.objects.get_or_create(ip=request.meta['REMOTE_ADDR'])[0]
-    
-def get_or_create_authenticated_consumer(request):
-    return Consumer.objects.get_or_create(user=request.user)[0]
+from userroles import roles
+from .consts import THROTTLING_OPTIONS, THROTTLING_STATUS_CODE
+from .consts import THROTTLING_INTERVAL, THROTTLING_NUMBER_OF_REQUESTS
+from .utils  import get_or_create_anonymous_access, get_or_create_authenticated_access, get_or_create_access
+from .models import Access
+from datetime  import timedelta
+from functools import wraps
     
 
-def throttle(number_of_request=0, per_anonymous=False, all_anonymous=None, all_users=False, 
-role=None, group=None, all_in_group=None, scope=None, settings=None, interval=THROTTLING_INTERVAL):
+def throttle(number_of_requests=THROTTLING_NUMBER_OF_REQUESTS, all_with_role=None,
+per_anonymous=False, all_anonymous=None, all_users=False, role=None, group=None, 
+all_in_group=None, scope=None, settings=None, interval=THROTTLING_INTERVAL):
 
-    def decorator(f):	    
-        def wrapper(self, request, *args, **kwargs):
+    if isinstance(role, basestring):
+        role = roles.get( role )
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(request, *args, **kwargs):
             user = request.user
-                        
+            
             if not scope:
                 # set default value to scope
                 url_name = resolve( request.path ).url_name
-                scope = "%s::%s" % (request.method, url_name)
+                throttle_scope = "%s::%s" % (request.method, url_name)
+            else:
+                throttle_scope = scope
             
             if THROTTLING_OPTIONS:
                 # set values to throttle args according to pre-defined options
-                for k,v in THROTTLING_OPTIONS.get( settings or scope, {} ).iteritems()
+                for k,v in THROTTLING_OPTIONS.get( settings or throttle_scope, {} ).iteritems():
                     locals()[k] = v
 
             if per_anonymous:
                 if user.is_authenticated():
                     # Proceed if user is authenticated
-                    return f(self, request, *args, **kwargs)
+                    return f(request, *args, **kwargs)
                 else:
                     # Throttle each anonymous user
-                    consumer = get_or_create_anonymous_consumer( request )
-                    access   = Access.objects.get_or_create(consumer=consumer, scope=scope)
+                    access = get_or_create_anonymous_access( request, throttle_scope )
+                    current_request_count = access.count_requests()
+            
+            elif all_anonymous:
+                if user.is_authenticated():
+                    # Proceed if user is authenticated
+                    return f(request, *args, **kwargs)
+                else:
+                    # All anonymous users share the same 'pool' of allowed request
+                    access = get_or_create_anonymous_access( request, throttle_scope )
+                    current_request_count = Access.objects.filter(scope=throttle_scope).anonymous().count_requests()
             
             elif group or all_in_group:
-                if user.is_authenticated() and user.groups.filter(name=group).exists():
-                    consumer = get_or_create_authenticated_consumer( request )
+                group_name = group or all_in_group
+                if user.is_authenticated() and user.groups.filter(name=group_name).exists():
+                    access = get_or_create_authenticated_access( request, throttle_scope )
                     if group:
                         # Throttle if user belongs to Group
-                        access = Access.objects.get_or_create(consumer=consumer, scope=scope)
+                        current_request_count = access.count_requests()
                     else:
                         # All users within a Group share the same 'pool' of allowed request
-                        access = Access.objects.filter(consumer__groups__name=group, scope=scope)
+                        pool_access = Access.objects.filter(consumer__user__groups__name=group_name, scope=throttle_scope)
+                        current_request_count = pool_access.count_requests()
                 else:
                     # Proceed if user is not authenticated
-                    return f(self, request, *args, **kwargs)
+                    return f(request, *args, **kwargs)
+            
+            elif all_with_role:
+                pass
             
             elif role:
                 if not user.is_authenticated() or not hasattr(user, 'role'):
                     # Fails to proceed if user not authenticated or has no role
-                    return THROTTLING_STATUS_CODE
-                elif user.role is role or user.role <= role:
-                    # Proceed if user role is hierarchically above given role
-                    return f(self, request, *rargs, **rkwargs)
-                else:
+                    return HttpResponse(status=THROTTLING_STATUS_CODE)
+                elif user.role == role or roles.get( user.role.name ).subrole_of( role ):
                     # Throttle each user with equal or lower role
-                    consumer = get_or_create_authenticated_consumer( request )
-                    access   = Access.objects.get_or_create(consumer=consumer, scope=scope)
+                    access = get_or_create_authenticated_access( request, throttle_scope )
+                    current_request_count = access.count_requests()
+                else:
+                    # Proceed if user role is hierarchically above given role
+                    return f(request, *args, **kwargs)
             
             elif all_users:
                 # All users (authenticated and anonymous) share the same 'pool' of allowed request
-                get_or_create_consumer( request )
-                access = Access.objects.filter(scope=scope)
-                
-            elif all_anonymous:
-                # All anonymous users share the same 'pool' of allowed request
-                get_or_create_anonymous_consumer( request )
-                access = Access.objects.filter(scope=scope).anonymous()
+                access = get_or_create_access( request, throttle_scope )
+                current_request_count = Access.objects.filter(scope=throttle_scope).count_requests()
             
             else:
                 # Throttle each user (authenticated and anonymous)
-                consumer = get_or_create_consumer( request )
-                access   = Access.objects.get_or_create(consumer=consumer, scope=scope)
+                access = get_or_create_access( request, throttle_scope )
+                current_request_count = access.count_requests()
             
-            if number_of_requests <= access.count_request():
+            if number_of_requests > current_request_count:
                 if not hasattr(request, 'access_updated'):
                     # Do this only once per request
                     expiration_date = access.min_datemark() + timedelta(minutes=interval)
-                    if expiration_date < datetime.now():
+                    if expiration_date < timezone.now():
                         # reset count if exceeded the time interval since datemark
                         access.reset_count()
                     else:
@@ -97,8 +108,8 @@ role=None, group=None, all_in_group=None, scope=None, settings=None, interval=TH
                         access.increment_count()
                     request.access_updated = True
                 # Proceed if under the allowed number of request
-                return f(self, request, *args, **kwargs)
-            return THROTTLING_STATUS_CODE
+                return f(request, *args, **kwargs)
+            return HttpResponse(status=THROTTLING_STATUS_CODE)
         
         return wrapper	
     return decorator
