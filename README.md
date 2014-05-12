@@ -3,11 +3,27 @@ django-throttling
 
 Throttling system for Django views.
 
+## Basic Usage
+
+Add to settings
+
+```python
+INSTALLED_APPS = (
+    ...
+    'throttling',
+)
+```
+
+and in your views
+
 ```python
 @throttle(number_of_requests=1)
 def view(request):
     return HttpResponse('success')
 ```
+
+
+Check the [docs](docs/index.md)
 
 ## features
 

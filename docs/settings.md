@@ -30,7 +30,7 @@ Pre-defined arguments for throttling for certain views or scopes. Defaults to `{
 
 ```python
 THROTTLING_OPTIONS = {
-    "somescope": {
+    "anonymous": {
         "number_of_requests": 1000,
         "per_anonymous": True,
     }
@@ -38,13 +38,21 @@ THROTTLING_OPTIONS = {
 ```
 
 ```python
-@throttle(scope="somescope")
+@throttle(setting="anonymous")
 def someview(requests):
     return HttpResponse('success')
 
 '''which is the same as'''
 
 @throttle(number_of_requests=1000, per_anonymous=True)
+def someview(requests):
+    return HttpResponse('success')
+```
+
+You could also use `scope` argument as well, however the number of requests will be shared among the views with that scope.
+
+```python
+@throttle(scope="anonymous")
 def someview(requests):
     return HttpResponse('success')
 ```
