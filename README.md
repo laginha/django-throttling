@@ -21,7 +21,7 @@ INSTALLED_APPS = (
 and in your views
 
 ```python
-@throttle(number_of_requests=1)
+@throttle(1000)
 def view(request):
     return HttpResponse('success')
 ```
