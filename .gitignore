@@ -54,3 +54,4 @@ docs/_build/
 
 # Other
 *.sqlite3
+*.DS_Store
