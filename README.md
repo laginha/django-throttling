@@ -3,6 +3,10 @@ django-throttling
 
 Throttling system for Django views.
 
+## Install
+
+    pip install git+https://github.com/laginha/django-throttling/
+
 ## Basic Usage
 
 Add to settings
@@ -21,7 +25,6 @@ and in your views
 def view(request):
     return HttpResponse('success')
 ```
-
 
 Check the [docs](docs/index.md)
 

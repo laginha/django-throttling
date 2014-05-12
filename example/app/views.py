@@ -2,7 +2,6 @@
 from django.http import HttpResponse
 from throttling.decorators import throttle
 
-
 def view_without_throttle(request):
     return HttpResponse('success')
 
@@ -33,4 +32,3 @@ def view_with_throttle_group(request):
 @throttle(all_in_group='groupname')
 def view_with_throttle_all_in_group(request):
     return HttpResponse('success')
-

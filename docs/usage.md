@@ -17,6 +17,21 @@ Don't forget to sync it.
 ## Meet the decorator
 
 ```python
+@throttle()
+def view(request):
+    return HttpResponse('success')
+```
+
+This will limit each user (anonymous or authenticated) to a default maximum number of requests for this specific view.
+
+
+### Args
+
+#### number_of\_requests
+
+Defines the maximum number of requests a user our group of users is allowed for a specific view. Defaults to `THROTTLING_NUMBER_OF_REQUESTS` setting.
+
+```python
 @throttle(number_of_requests=100)
 def view(request):
     return HttpResponse('success')
@@ -30,13 +45,15 @@ def view(request):
     return HttpResponse('success')
 ```
 
-This will limit each user (anonymous or authenticated) to a maximum number of requests for this specific view.
+#### all_users
 
-### Args
+Limit all user (anonymous or authenticated) to a shared maximum number of requests for a specific view. In other words, all users, together, are limited to a given `number_of_requests`.
 
-#### number_of\_requests
-
-Defaults to `THROTTLING_NUMBER_OF_REQUESTS` setting.
+```python
+@throttle(100, all_users=True)
+def view(request):
+    return HttpResponse('success')
+```
 
 #### per_anonymous
 
@@ -54,16 +71,6 @@ Limit all anonymous user to a shared maximum number of requests for a specific v
 
 ```python
 @throttle(100, all_anonymous=True)
-def view(request):
-    return HttpResponse('success')
-```
-
-#### all_users
-
-Limit all user (anonymous or authenticated) to a shared maximum number of requests for a specific view. In other words, all users, together, are limited to a given `number_of_requests`.
-
-```python
-@throttle(100, all_users=True)
 def view(request):
     return HttpResponse('success')
 ```

@@ -16,7 +16,6 @@ from userroles.models import set_user_role
 from userroles        import roles
 
 
-
 print "Settings:"
 print "THROTTLING_OPTIONS =",            THROTTLING_OPTIONS
 print "THROTTLING_STATUS_CODE =",        THROTTLING_STATUS_CODE
