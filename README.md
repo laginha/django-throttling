@@ -21,6 +21,8 @@ INSTALLED_APPS = (
 and in your views
 
 ```python
+from throttling.decorators import throttle
+
 @throttle(1000)
 def view(request):
     return HttpResponse('success')
