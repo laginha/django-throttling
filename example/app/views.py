@@ -37,3 +37,6 @@ def view_with_throttle_all_in_group(request):
 def view_with_throttle_config(request):
     return HttpResponse('success')
 
+@throttle(interval=1)
+def view_with_throttle_interval(request):
+    return HttpResponse('success')

@@ -3,6 +3,7 @@ Run test:
     python manage.py test app
     python manage.py test app --settings=example.alt_settings
 '''
+import time
 from django.test.client                 import Client, RequestFactory
 from django.test                        import TestCase
 from django.contrib.auth.models         import User, Group, Permission
@@ -127,4 +128,12 @@ class ThrottlingTest(TestCase):
         number_of_requests = THROTTLING_CONFIG.get('anonymous').get('number_of_requests')
         self.assertStatus( url, 200, repeat=number_of_requests )
         self.assertStatus( url, THROTTLING_STATUS_CODE )
+        
+    def test_view_with_throttle_interval(self):
+        url="/view_with_throttle_interval"
+        self.assertStatus( url, 200, repeat=THROTTLING_NUMBER_OF_REQUESTS )
+        self.assertStatus( url, THROTTLING_STATUS_CODE )
+        time.sleep( 61 )
+        self.assertStatus( url, 200 )
+        
         

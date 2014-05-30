@@ -39,7 +39,7 @@ def throttle(*args, **kwargs):
     
     if isinstance(role, basestring):
         role = roles.get( role )
-                            
+                                
     def decorator(f):
         @wraps(f)
         def wrapper(request, *args, **kwargs):
@@ -109,20 +109,30 @@ def throttle(*args, **kwargs):
                 # Throttle each user (authenticated and anonymous)
                 access = get_or_create_access( request, throttle_scope )
                 current_request_count = access.count_requests()
-            
+  
+            expiration_date = access.min_datemark() + timedelta(minutes=interval)
+                
             if number_of_requests > current_request_count:
                 if not hasattr(request, 'access_updated'):
                     # Do this only once per request
-                    expiration_date = access.min_datemark() + timedelta(minutes=interval)
+                    request.access_updated = True
                     if expiration_date < timezone.now():
                         # reset count if exceeded the time interval since datemark
                         access.reset_count()
                     else:
                         # increment request count
                         access.increment_count()
-                    request.access_updated = True
                 # Proceed if under the allowed number of request
                 return f(request, *args, **kwargs)
+                
+            elif expiration_date < timezone.now():
+                if not hasattr(request, 'access_updated'):
+                    # Do this only once per request
+                    request.access_updated = True
+                    # reset count if exceeded the time interval since datemark
+                    access.reset_count()
+                return f(request, *args, **kwargs)
+                
             return HttpResponse(status=THROTTLING_STATUS_CODE)
         
         return wrapper	
