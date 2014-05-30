@@ -11,13 +11,13 @@ from django.test.utils                  import override_settings
 from django.conf                        import settings
 from throttling.models import Access, Consumer
 from throttling.consts import THROTTLING_NUMBER_OF_REQUESTS, THROTTLING_INTERVAL
-from throttling.consts import THROTTLING_OPTIONS, THROTTLING_STATUS_CODE
+from throttling.consts import THROTTLING_CONFIG, THROTTLING_STATUS_CODE
 from userroles.models import set_user_role
 from userroles        import roles
 
 
 print "Settings:"
-print "THROTTLING_OPTIONS =",            THROTTLING_OPTIONS
+print "THROTTLING_CONFIG =",             THROTTLING_CONFIG
 print "THROTTLING_STATUS_CODE =",        THROTTLING_STATUS_CODE
 print "THROTTLING_INTERVAL =",           THROTTLING_INTERVAL
 print "THROTTLING_NUMBER_OF_REQUESTS =", THROTTLING_NUMBER_OF_REQUESTS
@@ -121,4 +121,10 @@ class ThrottlingTest(TestCase):
         self.assertStatus( url, 200, login=user )
         user.groups.add( group )
         self.assertStatus( url, THROTTLING_STATUS_CODE, login=user )
+        
+    def test_view_with_throttle_config(self):
+        url = "/view_with_throttle_config"
+        number_of_requests = THROTTLING_CONFIG.get('anonymous').get('number_of_requests')
+        self.assertStatus( url, 200, repeat=number_of_requests )
+        self.assertStatus( url, THROTTLING_STATUS_CODE )
         

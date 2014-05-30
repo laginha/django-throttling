@@ -6,7 +6,7 @@ from django.db.models         import Count
 from django.utils             import timezone
 from django.core.urlresolvers import resolve
 from userroles import roles
-from .consts import THROTTLING_OPTIONS, THROTTLING_STATUS_CODE
+from .consts import THROTTLING_CONFIG, THROTTLING_STATUS_CODE
 from .consts import THROTTLING_INTERVAL, THROTTLING_NUMBER_OF_REQUESTS
 from .utils  import get_or_create_anonymous_access, get_or_create_authenticated_access, get_or_create_access
 from .models import Access
@@ -14,13 +14,32 @@ from datetime  import timedelta
 from functools import wraps
     
 
-def throttle(number_of_requests=THROTTLING_NUMBER_OF_REQUESTS, all_with_role=None,
-per_anonymous=False, all_anonymous=None, all_users=False, role=None, group=None, 
-all_in_group=None, scope=None, settings=None, interval=THROTTLING_INTERVAL):
+def throttle(*args, **kwargs):
+    
+    config = kwargs.get('config', None)
 
+    if THROTTLING_CONFIG and config:
+        # set values to throttle args according to pre-defined options
+        for key,value in THROTTLING_CONFIG.get( config, {} ).iteritems():
+            kwargs[ key ] = value
+    
+    if args:
+        number_of_requests = args[0] 
+    else:
+        number_of_requests = kwargs.get('number_of_requests', THROTTLING_NUMBER_OF_REQUESTS)
+    all_with_role = kwargs.get('all_with_role', None)
+    per_anonymous = kwargs.get('per_anonymous', False)
+    all_anonymous = kwargs.get('all_anonymous', None)
+    all_users     = kwargs.get('all_users', False)
+    role          = kwargs.get('role', None)
+    group         = kwargs.get('group', None)
+    all_in_group  = kwargs.get('all_in_group', None)
+    scope         = kwargs.get('scope', None)
+    interval      = kwargs.get('interval', THROTTLING_INTERVAL)
+    
     if isinstance(role, basestring):
         role = roles.get( role )
-
+                            
     def decorator(f):
         @wraps(f)
         def wrapper(request, *args, **kwargs):
@@ -32,11 +51,6 @@ all_in_group=None, scope=None, settings=None, interval=THROTTLING_INTERVAL):
                 throttle_scope = "%s::%s" % (request.method, url_name)
             else:
                 throttle_scope = scope
-            
-            if THROTTLING_OPTIONS:
-                # set values to throttle args according to pre-defined options
-                for k,v in THROTTLING_OPTIONS.get( settings or throttle_scope, {} ).iteritems():
-                    locals()[k] = v
 
             if per_anonymous:
                 if user.is_authenticated():

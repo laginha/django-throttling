@@ -40,11 +40,19 @@ INSTALLED_APPS = (
     'userroles',
 )
 
+THROTTLING_NUMBER_OF_REQUESTS = 100
+THROTTLING_CONFIG = {
+    "anonymous": {
+        "number_of_requests": 88,
+        "per_anonymous": True,
+    }
+}
+
 USER_ROLES = (
     'other',
     'developer',
 )
-DEVELOPER_SUBROLES = ('junior_developer', 'senior_developer')
+DEVELOPER_ROLES = ('junior_developer', 'senior_developer')
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

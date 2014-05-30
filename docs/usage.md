@@ -130,12 +130,12 @@ def view(request):
     return HttpResponse('success')
 ```
 
-#### settings
+#### config
 
-The key for the `THROTTLING_OPTIONS` setting. Check the [settings documentation](settings.md#throttling_options).
+The key for the `THROTTLING_CONFIG` setting. Check the [settings documentation](settings.md#throttling_config).
 
 ```python
-@throttle(setting="developer")
+@throttle(config="developer")
 def view(request):
     return HttpResponse('success')
 ```

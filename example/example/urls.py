@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^view_with_throttle_role$',          'app.views.view_with_throttle_role'),
     url(r'^view_with_throttle_group$',         'app.views.view_with_throttle_group'),
     url(r'^view_with_throttle_all_in_group$',  'app.views.view_with_throttle_all_in_group'),
+    url(r'^view_with_throttle_config$',        'app.views.view_with_throttle_config'),
     
     url(r'^admin/', include(admin.site.urls)),
 )

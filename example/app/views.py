@@ -32,3 +32,8 @@ def view_with_throttle_group(request):
 @throttle(all_in_group='groupname')
 def view_with_throttle_all_in_group(request):
     return HttpResponse('success')
+
+@throttle(config='anonymous')
+def view_with_throttle_config(request):
+    return HttpResponse('success')
+

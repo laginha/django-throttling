@@ -24,12 +24,12 @@ The default maximum number of requests after which the user is throttled. Defaul
 THROTTLING_NUMBER_OF_REQUESTS = 10000
 ```
 
-## THROTTLING_OPTIONS
+## THROTTLING_CONFIG
 
-Pre-defined arguments for throttling for certain views or scopes. Defaults to `{}`
+Pre-defined configurations for throttling views. Defaults to `{}`
 
 ```python
-THROTTLING_OPTIONS = {
+THROTTLING_CONFIG = {
     "anonymous": {
         "number_of_requests": 1000,
         "per_anonymous": True,
@@ -38,21 +38,13 @@ THROTTLING_OPTIONS = {
 ```
 
 ```python
-@throttle(setting="anonymous")
+@throttle(config="anonymous")
 def someview(requests):
     return HttpResponse('success')
 
 '''which is the same as'''
 
 @throttle(number_of_requests=1000, per_anonymous=True)
-def someview(requests):
-    return HttpResponse('success')
-```
-
-You could also use `scope` argument as well, however the number of requests will be shared among the views with that scope.
-
-```python
-@throttle(scope="anonymous")
 def someview(requests):
     return HttpResponse('success')
 ```
