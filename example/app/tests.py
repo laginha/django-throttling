@@ -130,10 +130,15 @@ class ThrottlingTest(TestCase):
         self.assertStatus( url, THROTTLING_STATUS_CODE )
         
     def test_view_with_throttle_interval(self):
-        url="/view_with_throttle_interval"
+        url = "/view_with_throttle_interval"
         self.assertStatus( url, 200, repeat=THROTTLING_NUMBER_OF_REQUESTS )
         self.assertStatus( url, THROTTLING_STATUS_CODE )
         time.sleep( 61 )
         self.assertStatus( url, 200 )
         
+    def test_view_with_throttle_scope(self):
+        url = "/view_with_throttle_scope_"
+        self.assertStatus( url+'a', 200, repeat=THROTTLING_NUMBER_OF_REQUESTS )
+        self.assertStatus( url+'a', THROTTLING_STATUS_CODE )
+        self.assertStatus( url+'b', THROTTLING_STATUS_CODE )
         

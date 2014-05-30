@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-import datetime
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
@@ -42,7 +41,7 @@ class Access(models.Model):
 
     def reset_count(self):
         self.count = COUNT_VALUE_AFTER_RESET
-        self.datemark = datetime.datetime.now()
+        self.datemark = timezone.now()
         self.save()
 
     class Meta:

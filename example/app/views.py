@@ -40,3 +40,12 @@ def view_with_throttle_config(request):
 @throttle(interval=1)
 def view_with_throttle_interval(request):
     return HttpResponse('success')
+
+@throttle(scope='scope')
+def view_with_throttle_scope_a(request):
+    return HttpResponse('success')
+
+@throttle(scope='scope')
+def view_with_throttle_scope_b(request):
+    return HttpResponse('success')
+    

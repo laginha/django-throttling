@@ -10,7 +10,7 @@ links = [str(each.url) for each in install_reqs if each.url]
 
 setup(
     name             = 'Django-Throttling',
-    version          = '1.1.1',
+    version          = '1.1.2',
     author           = "Diogo Laginha",
     url              = 'https://github.com/laginha/django-throttling',
     description      = "Throttling for Django",
