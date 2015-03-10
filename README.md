@@ -5,7 +5,7 @@ Throttling system for Django views.
 
 ## Install
 
-    pip install git+https://github.com/laginha/django-throttling/
+    pip install throttling
 
 ## Basic Usage
 
