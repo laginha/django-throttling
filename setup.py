@@ -16,7 +16,6 @@ setup(
     packages         = find_packages(where='src'),
     package_dir      = {'': 'src'},
     install_requires = reqs,
-    dependency_links = links,
     extras_require   = {},
     zip_safe         = False,
     license          = 'MIT',
