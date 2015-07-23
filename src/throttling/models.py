@@ -3,9 +3,9 @@
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
-from model_utils.managers import PassThroughManager
 from .managers import AccessQuerySet
-from .consts import COUNT_VALUE_AFTER_RESET, DEFAULT_COUNT_VALUE
+from .consts import COUNT_VALUE_AFTER_RESET
+from .consts import DEFAULT_COUNT_VALUE
 
 
 class Consumer(models.Model):
@@ -27,7 +27,7 @@ class Access(models.Model):
     scope    = models.CharField(max_length=100)
     count    = models.IntegerField(default=DEFAULT_COUNT_VALUE)
     datemark = models.DateTimeField(blank=True, default=timezone.now)
-    objects  = PassThroughManager.for_queryset_class(AccessQuerySet)()
+    objects  = AccessQuerySet.as_manager()
 
     def count_requests(self):
         return self.count

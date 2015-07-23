@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from django.db.models import F, Count, Min, Sum, query
-from .consts import COUNT_VALUE_AFTER_RESET
-from django.utils import timezone
+from django.db import models
+from django.db.models import Min
+from django.db.models import Sum
 
-
-class AccessQuerySet(query.QuerySet):
+class AccessQuerySet(models.QuerySet):
     
     def anonymous(self):
         return self.filter(consumer__ip__isnull=False)
